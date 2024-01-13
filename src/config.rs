@@ -89,6 +89,13 @@ pub struct RGBMatrixConfig {
     /// the LED sequence, Default: "RGB"
     #[argh(option, default = "LedSequence::Rgb")]
     pub led_sequence: LedSequence,
+
+    // i added this because my pi refuses to disable the sound module, so i rmmod it on startup. 
+    // but my app starts before the rmmod so it always crashes, so i figured it would be handy to add a toggle for it
+    // - ayyEve
+    /// ignore the sound module being loaded
+    #[argh(option, default = "false")]
+    pub ignore_sound_module: bool, 
 }
 
 impl RGBMatrixConfig {
@@ -117,6 +124,7 @@ impl Default for RGBMatrixConfig {
             pixelmapper: vec![],
             row_setter: RowAddressSetterType::Direct,
             led_sequence: LedSequence::Rgb,
+            ignore_sound_module: false
         }
     }
 }

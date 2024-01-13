@@ -3,7 +3,7 @@ use std::{error::Error, ops::BitOr, str::FromStr};
 use crate::gpio_bits;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) struct ColorBits {
+pub struct ColorBits {
     pub(crate) r1: u32,
     pub(crate) g1: u32,
     pub(crate) b1: u32,
@@ -13,6 +13,27 @@ pub(crate) struct ColorBits {
 }
 
 impl ColorBits {
+    /// Custom color pin mapping (if you're wiring everything manually)
+    /// 
+    /// All pins are GPIO pins
+    pub const fn custom(
+        r1: u8,
+        g1: u8,
+        b1: u8,
+        r2: u8,
+        g2: u8,
+        b2: u8
+    ) -> Self {
+        Self {
+            r1: gpio_bits!(r1),
+            g1: gpio_bits!(g1),
+            b1: gpio_bits!(b1),
+            r2: gpio_bits!(r2),
+            g2: gpio_bits!(g2),
+            b2: gpio_bits!(b2),
+        }
+    }
+
     pub const fn unused() -> Self {
         Self {
             r1: 0,
@@ -42,11 +63,17 @@ impl ColorBits {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) struct Panels {
+pub struct Panels {
     pub(crate) color_bits: [ColorBits; 6],
 }
 
 impl Panels {
+    pub const fn custom(color_bits: [ColorBits; 6]) -> Self {
+        Self {
+            color_bits
+        }
+    }
+
     pub(crate) fn used_bits(&self) -> u32 {
         self.red_bits() | self.green_bits() | self.blue_bits()
     }
@@ -131,6 +158,35 @@ impl HardwareMapping {
 }
 
 impl HardwareMapping {
+    /// Custom hardware mapping (if you're wiring everything manually)
+    /// 
+    /// All pins are GPIO pins
+    pub const fn custom(
+        output_enable: u8,
+        clock: u8,
+        strobe: u8,
+        a: u8,
+        b: u8,
+        c: u8,
+        d: u8,
+        e: u8,
+        panels: Panels
+    ) -> Self {
+        Self {
+            output_enable: gpio_bits!(output_enable),
+            clock: gpio_bits!(clock),
+            strobe: gpio_bits!(strobe),
+
+            a: gpio_bits!(a),
+            b: gpio_bits!(b),
+            c: gpio_bits!(c),
+            d: gpio_bits!(d),
+            e: gpio_bits!(e),
+
+            panels,
+        }
+    }
+
     /// The regular hardware mapping used by the adapter PCBs.
     pub const fn regular() -> Self {
         Self {

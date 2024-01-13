@@ -17,7 +17,7 @@ mod utils;
 pub use canvas::{Canvas, LedSequence};
 pub use chip::PiChip;
 pub use config::RGBMatrixConfig;
-pub use hardware_mapping::HardwareMapping;
+pub use hardware_mapping::{HardwareMapping, Panels, ColorBits};
 pub use init_sequence::PanelType;
 pub use multiplex_mapper::MultiplexMapperType;
 pub use rgb_matrix::RGBMatrix;

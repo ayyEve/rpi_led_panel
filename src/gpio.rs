@@ -18,6 +18,7 @@ use crate::{
 pub enum GpioInitializationError {
     OneWireProtocolEnabled,
     SoundModuleLoaded,
+    InvalidPwmPin
 }
 
 impl Error for GpioInitializationError {}
@@ -36,6 +37,10 @@ impl Display for GpioInitializationError {
                 \t* Other distributions: Add `blacklist snd_bcm2835` in \
                 `/etc/modprobe.d/alsa-blacklist.conf`\n\
                 Finally, reboot the system and try again.",
+            ),
+            // ayyEve TODO: add better description
+            GpioInitializationError::InvalidPwmPin => f.write_str(
+                "Invalid Output Enable pin provided. Please use pin 18 or pin 12", 
             ),
         }
     }
@@ -59,7 +64,7 @@ impl Gpio {
         config: &RGBMatrixConfig,
         address_setter: &dyn RowAddressSetter,
     ) -> Result<Self, GpioInitializationError> {
-        if linux_has_module_loaded("snd_bcm2835") {
+        if linux_has_module_loaded("snd_bcm2835") && !config.ignore_sound_module {
             return Err(GpioInitializationError::SoundModuleLoaded);
         }
 
@@ -128,7 +133,7 @@ impl Gpio {
             &mut pwm_registers,
             &mut gpio_registers,
             &mut clk_registers,
-        );
+        )?;
 
         let gpio_slowdown = config.slowdown.unwrap_or_else(|| chip.gpio_slowdown());
 

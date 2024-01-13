@@ -1,5 +1,6 @@
 use crate::{
     gpio_bits,
+    gpio::GpioInitializationError,
     registers::{ClkRegisters, GPIOFunction, GPIORegisters, PWMRegisters, TimeRegisters},
 };
 
@@ -26,20 +27,22 @@ impl PinPulser {
         pwm_registers: &mut PWMRegisters,
         gpio_registers: &mut GPIORegisters,
         clk_registers: &mut ClkRegisters,
-    ) -> Self {
+    ) -> Result<Self, GpioInitializationError> {
         let sleep_hints_us = bitplane_timings_ns.iter().map(|t| t / 1000).collect();
 
         let time_base = bitplane_timings_ns[0];
 
-        if pins == gpio_bits!(18) {
-            // Set GPIO 18 to PWM0 mode
-            gpio_registers.select_function(18, GPIOFunction::Alt5);
-        } else if pins == gpio_bits!(12) {
-            // Set GPIO 12 to PWM0 mode
-            gpio_registers.select_function(12, GPIOFunction::Alt0);
-        } else {
-            unreachable!()
-        }
+        // enable PWM0 on the provided pin(s?)
+        let things = [
+            (18, GPIOFunction::Alt5), // Set GPIO 18 to PWM0 mode
+            (12, GPIOFunction::Alt0), // Set GPIO 12 to PWM0 mode
+            // ayyEve TODO: are the other pwm pins valid? i would assume so but cant test until my led matrices arrive
+        ];
+        things
+            .into_iter() 
+            .find(|(pin, _)| pins == gpio_bits!(pin)) 
+            .map(|(pin, func)| gpio_registers.select_function(pin, func)) 
+            .ok_or(GpioInitializationError::InvalidPwmPin)?;
 
         pwm_registers.reset_pwm();
         clk_registers.init_pwm_divider((time_base / 2) / PWM_BASE_TIME_NS);
@@ -48,11 +51,11 @@ impl PinPulser {
             .map(|timing| 2 * timing / time_base)
             .collect();
 
-        Self {
+        Ok(Self {
             sleep_hints_us,
             pulse_periods,
             current_pulse: None,
-        }
+        })
     }
 
     pub(crate) fn send_pulse(
